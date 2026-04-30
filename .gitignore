@@ -1,0 +1,9 @@
+data/raw/
+data/processed/X.npy
+data/processed/y.npy
+__pycache__/
+*.pyc
+.claude/
+scripts/
+*.zip
+*.pdf

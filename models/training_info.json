@@ -1,0 +1,11 @@
+{
+  "n_classes": 634,
+  "n_train": 2215,
+  "n_val": 738,
+  "n_test": 738,
+  "test_accuracy": 0.7236,
+  "best_val_accuracy": 0.7304,
+  "epochs_trained": 150,
+  "batch_size": 64,
+  "lr": 0.001
+}
