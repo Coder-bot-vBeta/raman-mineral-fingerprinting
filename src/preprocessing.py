@@ -65,6 +65,14 @@ def preprocess_spectrum(wavenumbers, intensities):
     wn = np.asarray(wavenumbers, dtype=float)
     inten = np.asarray(intensities, dtype=float)
 
+    # Guard against length mismatch from malformed files
+    min_len = min(len(wn), len(inten))
+    wn, inten = wn[:min_len], inten[:min_len]
+
+    # Drop NaN / Inf values before sorting
+    valid = np.isfinite(wn) & np.isfinite(inten)
+    wn, inten = wn[valid], inten[valid]
+
     # Sort and deduplicate
     order = np.argsort(wn)
     wn, inten = wn[order], inten[order]

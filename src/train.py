@@ -91,9 +91,10 @@ def train(
     print(f"Device: {device}")
     model = RamanNet(n_classes).to(device)
 
-    # Class-weighted cross-entropy loss
+    # Class-weighted cross-entropy with label smoothing (0.1) to prevent
+    # overconfident predictions on visually similar classes (e.g. Calcite vs Rhodochrosite)
     cw = torch.tensor(class_weights / class_weights.sum() * n_classes, dtype=torch.float32).to(device)
-    criterion = nn.CrossEntropyLoss(weight=cw)
+    criterion = nn.CrossEntropyLoss(weight=cw, label_smoothing=0.1)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs)

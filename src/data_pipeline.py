@@ -126,8 +126,10 @@ def _parse_rruff_file(filepath: Path):
             # Handle both comma-separated and whitespace-separated
             parts = line.replace(";", ",").split(",")
             if len(parts) >= 2:
-                wn_list.append(float(parts[0].strip()))
-                inten_list.append(float(parts[1].strip()))
+                w = float(parts[0].strip())
+                i = float(parts[1].strip())
+                wn_list.append(w)
+                inten_list.append(i)
         except ValueError:
             continue
 
@@ -146,14 +148,15 @@ def build_dataset(data_dir: str = "data", min_samples: int = MIN_SAMPLES_PER_CLA
     processed_dir = Path(data_dir) / "processed"
     processed_dir.mkdir(parents=True, exist_ok=True)
 
-    # Collect processed Raman spectrum files only (skip RAW and IR files)
+    # Collect all Raman spectrum files — both Processed and RAW (skip IR files)
+    # Including RAW files ~doubles training data and exposes the model to
+    # fluorescence-affected spectra that ALS baseline correction must handle.
     all_files = []
     for child in raw_dir.iterdir():
         if child.is_dir():
             for fpath in child.rglob("*.txt"):
                 name_lower = fpath.name.lower()
-                # Accept files that are Processed Raman spectra
-                if "processed" in name_lower and "raman" in name_lower:
+                if "raman" in name_lower and "ir" not in name_lower:
                     all_files.append(fpath)
 
     # Fallback: accept any .txt if filter yielded nothing
