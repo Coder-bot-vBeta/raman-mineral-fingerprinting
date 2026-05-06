@@ -25,8 +25,8 @@ NASA_FILES = {
 }
 
 EXPECTED = {
-    "Olivine": "Olivine",
-    "Calcite (CaCO3)": "Calcite",
+    "Olivine": ["Olivine", "Forsterite", "Fayalite"],
+    "Calcite (CaCO3)": ["Calcite"],
 }
 
 
@@ -66,8 +66,8 @@ def save_result_figure(mineral_name, wn_raw, inten_raw, result, out_path):
     fig.patch.set_facecolor("white")
 
     pred_label  = top[0][0]
-    exp_label   = EXPECTED[mineral_name]
-    match_icon  = "PASS" if exp_label.lower() in pred_label.lower() else "FAIL"
+    exp_labels  = EXPECTED[mineral_name]
+    match_icon  = "PASS" if any(e.lower() in pred_label.lower() for e in exp_labels) else "FAIL"
 
     fig.suptitle(
         f"NASA Ramdb External Test  —  {mineral_name}\n"

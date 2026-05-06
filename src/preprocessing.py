@@ -32,7 +32,7 @@ def remove_cosmic_rays(intensity, z_threshold=5.0):
     return cleaned
 
 
-def baseline_als(y, lam=1e5, p=0.01, n_iter=15):
+def baseline_als(y, lam=1e7, p=0.01, n_iter=20):
     """
     Asymmetric Least Squares baseline correction (Eilers & Boelens 2005).
     Removes fluorescence background while preserving Raman peaks.

@@ -1,10 +1,10 @@
 {
-  "n_classes": 1365,
-  "n_train": 6504,
-  "n_val": 1827,
-  "n_test": 1827,
-  "test_accuracy": 0.7433,
-  "best_val_accuracy": 0.7313,
+  "n_classes": 378,
+  "n_train": 9571,
+  "n_val": 2094,
+  "n_test": 2094,
+  "test_accuracy": 0.9107,
+  "best_val_accuracy": 0.9255,
   "epochs_trained": 150,
   "batch_size": 64,
   "lr": 0.001
