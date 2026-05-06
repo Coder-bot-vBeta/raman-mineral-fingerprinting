@@ -15,7 +15,7 @@ from pathlib import Path
 from torch.utils.data import DataLoader
 
 sys.path.insert(0, str(Path(__file__).parent))
-from model import RamanNet
+from model import RamanResNet, TemperatureScaler
 from dataset import RamanDataset
 
 
@@ -89,7 +89,7 @@ def train(
     # ---- Model -----------------------------------------------------------
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
-    model = RamanNet(n_classes).to(device)
+    model = RamanResNet(n_classes, in_channels=3).to(device)
 
     # Class-weighted cross-entropy with label smoothing (0.1) to prevent
     # overconfident predictions on visually similar classes (e.g. Calcite vs Rhodochrosite)
@@ -175,6 +175,22 @@ def train(
     print(f"  Best Val Acc  : {best_val_acc:.4f}  ({best_val_acc*100:.2f}%)")
     print(f"{'='*50}\n")
 
+    # Temperature calibration — post-hoc, on validation logits
+    # Finds scalar T that minimises NLL on val set; makes confidence scores trustworthy
+    print("Calibrating temperature on validation set...")
+    all_logits, all_labels = [], []
+    model.eval()
+    with torch.no_grad():
+        for Xb, yb in val_loader:
+            all_logits.append(model(Xb.to(device)).cpu())
+            all_labels.append(yb)
+    all_logits = torch.cat(all_logits)
+    all_labels = torch.cat(all_labels)
+    scaler = TemperatureScaler(temperature=1.5)
+    calibrated_T = scaler.calibrate(all_logits, all_labels)
+    torch.save(scaler.state_dict(), model_path / "temperature.pth")
+    print(f"Temperature T={calibrated_T:.4f} saved → models/temperature.pth")
+
     # Save results
     info = {
         "n_classes": n_classes,
@@ -186,6 +202,8 @@ def train(
         "epochs_trained": len(history["train_acc"]),
         "batch_size": batch_size,
         "lr": lr,
+        "in_channels": 3,
+        "temperature": round(float(calibrated_T), 6),
     }
     with open(model_path / "training_info.json", "w") as fh:
         json.dump(info, fh, indent=2)

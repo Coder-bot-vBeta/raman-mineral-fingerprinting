@@ -16,7 +16,8 @@ from scipy.optimize import nnls
 from scipy.interpolate import interp1d
 
 sys.path.insert(0, str(Path(__file__).parent))
-from model import RamanNet
+from model import RamanResNet, TemperatureScaler
+from dataset import compute_derivative_channels
 from preprocessing import preprocess_spectrum
 from config import STANDARD_GRID, MIXTURE_THRESHOLD
 
@@ -38,11 +39,28 @@ class RamanPredictor:
 
         # Model
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = RamanNet(n_classes).to(self.device)
+        import json as _json
+        try:
+            with open(model_dir / "training_info.json") as fh:
+                _info = _json.load(fh)
+            in_channels = _info.get("in_channels", 1)
+        except Exception:
+            in_channels = 3
+        self.in_channels = in_channels
+        self.model = RamanResNet(n_classes, in_channels=in_channels).to(self.device)
         self.model.load_state_dict(
             torch.load(model_dir / "best_model.pth", map_location=self.device)
         )
         self.model.eval()
+
+        # Temperature scaler — calibrated post-training; defaults to T=1.0 if absent
+        self.scaler = TemperatureScaler(1.0).to(self.device)
+        temp_path = model_dir / "temperature.pth"
+        if temp_path.exists():
+            self.scaler.load_state_dict(
+                torch.load(temp_path, map_location=self.device)
+            )
+        self.scaler.eval()
 
         # Reference spectra matrix for NNLS  shape: (n_classes, N_POINTS)
         self.reference_spectra = np.load(processed_dir / "reference_spectra.npy")
@@ -80,10 +98,14 @@ class RamanPredictor:
             return {"error": "Preprocessing failed — check that the spectrum covers 100–3500 cm⁻¹."}
 
         # CNN forward pass
-        tensor = torch.tensor(spectrum, dtype=torch.float32).unsqueeze(0).to(self.device)
+        if self.in_channels == 3:
+            ch = compute_derivative_channels(spectrum)
+            tensor = torch.tensor(ch, dtype=torch.float32).unsqueeze(0).to(self.device)
+        else:
+            tensor = torch.tensor(spectrum, dtype=torch.float32).unsqueeze(0).to(self.device)
         with torch.no_grad():
             logits = self.model(tensor)
-            probs = torch.softmax(logits, dim=-1).cpu().numpy()[0]
+            probs = torch.softmax(self.scaler(logits), dim=-1).cpu().numpy()[0]
 
         top_idx = np.argsort(probs)[::-1][:top_k]
         top_predictions = [(self.label_to_mineral[i], float(probs[i])) for i in top_idx]
@@ -138,12 +160,21 @@ class RamanPredictor:
         (values in [0, 1]) where high values indicate diagnostic spectral regions.
         """
         self.model.eval()
-        tensor = (
-            torch.tensor(spectrum, dtype=torch.float32)
-            .unsqueeze(0)
-            .to(self.device)
-            .requires_grad_(True)
-        )
+        if self.in_channels == 3:
+            ch = compute_derivative_channels(spectrum)
+            tensor = (
+                torch.tensor(ch, dtype=torch.float32)
+                .unsqueeze(0)
+                .to(self.device)
+                .requires_grad_(True)
+            )
+        else:
+            tensor = (
+                torch.tensor(spectrum, dtype=torch.float32)
+                .unsqueeze(0)
+                .to(self.device)
+                .requires_grad_(True)
+            )
 
         try:
             feat, logits = self.model.get_cam_activations_and_logits(tensor)

@@ -7,5 +7,7 @@
   "best_val_accuracy": 0.9255,
   "epochs_trained": 150,
   "batch_size": 64,
-  "lr": 0.001
+  "lr": 0.001,
+  "in_channels": 3,
+  "temperature": 1.0
 }
