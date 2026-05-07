@@ -1,0 +1,20 @@
+
+============================================================
+  STEP 2 — Training 1D-CNN with self-attention
+============================================================
+Dataset: 13759 spectra | 378 mineral classes
+Split: train=9571 | val=2094 | test=2094
+Device: cuda
+Epoch    1/150  loss=5.7660  train_acc=0.004  val_acc=0.004
+Epoch   10/150  loss=2.4003  train_acc=0.441  val_acc=0.310
+Epoch   20/150  loss=1.7194  train_acc=0.684  val_acc=0.594
+Epoch   30/150  loss=1.4479  train_acc=0.794  val_acc=0.699
+Epoch   40/150  loss=1.3225  train_acc=0.845  val_acc=0.730
+Epoch   50/150  loss=1.2620  train_acc=0.883  val_acc=0.795
+Epoch   60/150  loss=1.2117  train_acc=0.906  val_acc=0.828
+Epoch   70/150  loss=1.1726  train_acc=0.920  val_acc=0.854Epoch   80/150  loss=1.1455  train_acc=0.934  val_acc=0.883
+Epoch   90/150  loss=1.1099  train_acc=0.953  val_acc=0.906
+
+Epoch  100/150  loss=1.0835  train_acc=0.961  val_acc=0.912
+Epoch  110/150  loss=1.0661  train_acc=0.966  val_acc=0.925
+Epoch  120/150  loss=1.0595  train_acc=0.975  val_acc=0.931
